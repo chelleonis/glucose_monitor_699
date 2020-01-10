@@ -25,3 +25,10 @@ summary_stats <- c_glu2 %>% group_by(ID) %>% summarise(mean_gl = mean(glucose, n
 #compare to the other measurement method xddddd
 #need to import lol
 
+c_dem <- read.csv("C:/Users/typer321/Documents/cgm_demographics_biost699.csv", header = TRUE, 
+                  sep = ",",fileEncoding="UTF-8-BOM")
+
+c_dem <- c_dem %>% rename(ID = id)
+
+merge_attempt <- inner_join(summary_stats, c_dem, by = "ID")
+
