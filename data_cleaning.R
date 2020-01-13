@@ -22,19 +22,19 @@ c_glu <- read.csv("C:/Users/typer321/Documents/cgm_glucose_biost699.csv", header
 
 c_glu2 <- c_glu %>% rename(glucose = Historic.Glucose.mg.dL.) %>% 
   dplyr::mutate(Time24 = format(strptime(Time, "%I:%M %p"), format="%H:%M")) %>% 
-  tidyr::separate(Time24,c("Hour","Minute"), sep = ":") %>%
-  tidyr::separate(Date,c("Month","Day","Year"), sep = "/") %>%
-  dplyr::select(-c(Time))  
+  dplyr::mutate(combined = format(strptime(paste(Date,Time24), "%m/%d/%Y %H:%M"))) %>%
+  dplyr::select(-c(Time24,Date,Time)) %>%
+  group_by(ID) %>% dplyr::mutate(init = first(combined)) %>%
+  dplyr::mutate(delta_time = as.numeric(difftime(combined,init))/60)
+
+#delta_time is in minutes
 
 #adding exploratory variables here 
 #time past variable
 #AUC variable(?) 
 #above target variable
 #below target variable
-c_glu_key <- c_glu2 %>%  group_by(ID) %>% 
-  dplyr::mutate(init = paste(Month,Day,Year,Hour,Minute,sep = "-")) %>%
-  dplyr::mutate(init = first(init)) %>%
- 
+
 
 
 summary_stats <- c_glu2 %>% group_by(ID) %>% summarise(mean_gl = mean(glucose, na.rm = TRUE))
