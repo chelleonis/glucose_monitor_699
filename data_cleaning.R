@@ -33,26 +33,31 @@ c_glu_separate <- c_glu2 %>% mutate(period = cut(delta_time, breaks= c(-Inf,336,
 
 #delta_time is in hours
 
+#TO-DO: CREATE THE RIGHT VERSION OF DESIGN
+merge_attempt_2 <- inner_join(c_glu_separate, c_dem2, by = "ID") %>% rename(tg = Treatment.group) %>%
+  mutate(drug_type = case_when( (tg == 'Group A' & period == 1) | (tg == 'Group B' & period == 2) ~ 'x',
+         (tg == 'Group B' & period == 1) | (tg == 'Group A' & period == 2) ~ 'y'))
+
+#Group A: received drug x then drug y
+#Group B: received drug y then drug x
+
 #adding exploratory variables here 
 #time past variable
 #Time in Range
 #AUC variable(?) 
 #above target variable
-#below target variable
+#below target variable (hypoglycemia)
 
 
 
 summary_stats <- c_glu2 %>% group_by(ID) %>% summarise(mean_gl = mean(glucose, na.rm = TRUE))
 
-#compare to the other measurement method xddddd
-#need to import lol
-
 c_dem <- read.csv("C:/Users/typer321/Documents/cgm_demographics_biost699.csv", header = TRUE, 
                   sep = ",",fileEncoding="UTF-8-BOM")
 
-c_dem <- c_dem %>% rename(ID = id)
+c_dem2 <- c_dem %>% rename(ID = id) %>% select(c(ID,Treatment.group))
 
-merge_attempt <- inner_join(summary_stats, c_dem, by = "ID")
+merge_attempt <- inner_join(c_glu_separate, c_dem, by = "ID")
 
 #by_id
 test_plot <- ggplot(data = c_glu2, aes(x = delta_time, y = glucose, color = ID)) + 
@@ -60,8 +65,3 @@ test_plot <- ggplot(data = c_glu2, aes(x = delta_time, y = glucose, color = ID))
 
 test_plot2 <- ggplot(data = c_glu_separate, aes(x = delta_time_group, y = glucose, color = ID)) + 
   geom_line(aes(group = ID))
-
-#new var, time post initial measurement
-
-#separate by testing periods?
-#ANOVA for AUC? -> time past, AUC
