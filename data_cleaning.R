@@ -88,7 +88,8 @@ merge_attempt_5 <- inner_join(short_summary, c_dem, by = "ID")
 
 #c_dem2 <- c_dem %>% select(c(ID,Treatment.group))
 
-
+summary(aov(auc_bt_2 ~ drug_type, merge_attempt_5))
+summary(lm(log(auc_bt_2+1) ~ Age, data = merge_attempt_5))
 
 #by_id
 #test_plot <- ggplot(data = c_glu2, aes(x = delta_time, y = glucose, color = ID)) + 
