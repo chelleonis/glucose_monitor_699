@@ -26,7 +26,7 @@ c_glu2 <- c_glu %>% rename(glucose = Historic.Glucose.mg.dL.) %>%
   group_by(ID) %>% dplyr::arrange(combined) %>% dplyr::mutate(init = first(combined)) %>%
   dplyr::mutate(delta_time = as.numeric(difftime(combined,init))/3600)
 #336 hours = 2 weeks, since each glucose measurement period was 2 weeks
-c_glu_separate <- c_glu2 %>% mutate(period = cut(delta_time, breaks= c(-Inf,336,Inf),labels = c(1,2))) %>%
+c_glu_separate <- c_glu2 %>% mutate(period = cut(delta_time, breaks= c(-Inf,345,Inf),labels = c(1,2))) %>%
   group_by(ID,period) %>% dplyr::arrange(combined) %>% dplyr::mutate(init = first(combined)) %>%
   dplyr::mutate(delta_time_group = as.numeric(difftime(combined,init))/3600) 
 
@@ -39,7 +39,7 @@ merge_attempt_2 <- inner_join(c_glu_separate, c_dem2, by = "ID") %>% rename(tg =
 
 # stuff unequal amount of subjects on drug
 
-tester <- merge_attempt_2 %>% filter(drug_type == 'y')
+tester <- merge_attempt_2 %>% filter(drug_type != 'y')
 length(unique(tester$ID))
 
 #Group A: received drug x then drug y
@@ -70,6 +70,14 @@ merge_attempt_4 <- merge_attempt_3 %>%
   mutate(d_bt_1 = glucose-bt_1) %>%
   mutate(d_bt_2 = glucose-bt_2)
   
+#need to account for long breaks when calculating delta
+#split into breaks in groups?
+#biggest break > 2 hours
+
+
+#normalize AUC to total time
+
+
 short_summary <- merge_attempt_4 %>% group_by(ID,drug_type) %>%
   summarize(time_at_1 = sum(dt_group[d_at_1 > 0]), 
             time_at_2 = sum(dt_group[d_at_2 > 0]),
@@ -81,43 +89,10 @@ short_summary <- merge_attempt_4 %>% group_by(ID,drug_type) %>%
             auc_bt_2 = sum(dt_group[d_bt_2 < 0]*gluc_avg[d_bt_2 < 0]),
             mean_gl = mean(glucose))
 
+
+
 c_dem <- read.csv("C:/Users/typer321/Documents/cgm_demographics_biost699.csv", header = TRUE, 
                   sep = ",",fileEncoding="UTF-8-BOM") %>% rename(ID = id)
 
 merge_attempt_5 <- inner_join(short_summary, c_dem, by = "ID")
 
-#c_dem2 <- c_dem %>% select(c(ID,Treatment.group))
-
-summary(aov(auc_bt_2~drug_type, data=  merge_attempt_5))
-summary(aov(time_bt_2~drug_type, data=  merge_attempt_5))
-
-summary(lm(log(auc_bt_2+1) ~ Age, data = merge_attempt_5))
-
-
-#50 and 29
-id_50 <- merge_attempt_4 %>% filter(ID == 50) %>% mutate(dt_init = dt_init/24)
-#by_id
-test_plot <- ggplot(data = id_50, aes(x = dt_init, y = glucose, color = drug_type)) + 
-  geom_line(aes(group = drug_type)) +
-  labs(x = "Time (Days)", y = "Glucose Level", title = "Continuous Glucose Monitoring Plot for subject 50") +
-  geom_hline(yintercept = 250, linetype="dashed", color = "darkred") +
-  geom_hline(yintercept = 54, linetype="dashed", color = "darkred") +
-  geom_hline(yintercept = 180, linetype="dashed", color = "orange") +
-  geom_hline(yintercept = 70, linetype="dashed", color = "orange") +
-  theme(plot.title = element_text(hjust = 0.5, size = 18), axis.text = element_text(size = 12), 
-        axis.title = element_text(size = 15)) +
-  scale_x_continuous(limits = c(0,14), breaks = c(0,7,14)) +
-  scale_color_manual(values=c("#0000ff", "#00CC00"))
-
-#wtih 2 lines, make another ver with 4 lines
-
-#ADD MEAN WITHIN RANGE CATEGORICAL VARIABLE
-
-test_plot
-
-ggsave("hmm.png", plot = test_plot)
-
-#test_plot2 <- ggplot(data = c_glu_separate, aes(x = delta_time_group, y = glucose, color = ID)) + 
-#  geom_line(aes(group = ID))
-
-#two group t-test usual assumptions: independent groups -> have to use a different method
