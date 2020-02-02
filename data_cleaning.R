@@ -59,20 +59,8 @@ merge_attempt_3 <- merge_attempt_2 %>% group_by(ID,period) %>%
   mutate(dt_group = delta_time_group-lag(delta_time_group)) %>%
   rename(dt_init = delta_time_group) %>%
   mutate(gluc_avg = (glucose+lag(glucose))/2) %>%
-  mutate(missings = cut(dt_group, breaks= c(-Inf,2,Inf), labels = c(0,1)))
-
-
-merge_attempt_3[is.na(merge_attempt_3)] <- 0
-
-missing_refactor <- merge_attempt_3 %>% group_by(ID,period) %>%
-  mutate(dt_group_fix = dt_init - lag(dt_init))  %>%
+  mutate(missings = cut(dt_group, breaks= c(-Inf,2,Inf), labels = c(0,1))) %>%
   dplyr::select(ID,glucose,period,tg,drug_type,dt_init,dt_group, gluc_avg) 
-
-missing_refactor[is.na(missing_refactor)] <- 0
-  
-
-
-  
 
 merge_attempt_3[is.na(merge_attempt_3)] <- 0
 
@@ -82,23 +70,20 @@ merge_attempt_4 <- merge_attempt_3 %>%
   mutate(d_bt_1 = glucose-bt_1) %>%
   mutate(d_bt_2 = glucose-bt_2)
   
-
-
 #normalize AUC to total time
-
 
 short_summary <- merge_attempt_4 %>% group_by(ID,drug_type) %>%
   summarize(time_at_1 = sum(dt_group[d_at_1 > 0]), 
             time_at_2 = sum(dt_group[d_at_2 > 0]),
             time_bt_1 = sum(dt_group[d_bt_1 < 0]),
             time_bt_2 = sum(dt_group[d_bt_2 < 0]),
-            auc_at_1 = sum(dt_group[d_at_1 > 0]*gluc_avg[d_at_1>0]),
-            auc_at_2 = sum(dt_group[d_at_2 > 0]*gluc_avg[d_at_2>0]),
-            auc_bt_1 = sum(dt_group[d_bt_1 < 0]*gluc_avg[d_bt_1 < 0]),
-            auc_bt_2 = sum(dt_group[d_bt_2 < 0]*gluc_avg[d_bt_2 < 0]),
-            mean_gl = mean(glucose))
+            n_auc_at_1 = sum((dt_group[d_at_1 > 0]*gluc_avg[d_at_1>0])/max(dt_init)),
+            n_auc_at_2 = sum((dt_group[d_at_2 > 0]*gluc_avg[d_at_2>0])/max(dt_init)),
+            n_auc_bt_1 = sum((dt_group[d_bt_1 < 0]*gluc_avg[d_bt_1<0])/max(dt_init)),
+            n_auc_bt_2 = sum((dt_group[d_bt_2 < 0]*gluc_avg[d_bt_2<0])/max(dt_init)),
+            mean_gl = mean(glucose)) 
 
-
+#AUC normalized by total time
 
 c_dem <- read.csv("C:/Users/typer321/Documents/cgm_demographics_biost699.csv", header = TRUE, 
                   sep = ",",fileEncoding="UTF-8-BOM") %>% rename(ID = id)

@@ -2,9 +2,16 @@
 
 #descriptive stats
 
+#ANOVA with AUC data
+at1dt <- aov(n_auc_at_1 ~ drug_type ,data = merge_attempt_5)
+at2dt <- aov(n_auc_at_2 ~ drug_type ,data = merge_attempt_5)
+bt1dt <- aov(n_auc_bt_1 ~ drug_type ,data = merge_attempt_5)
+bt2dt <- aov(n_auc_bt_2 ~ drug_type ,data = merge_attempt_5)
 
-
-
+summary(at1dt)
+summary(at2dt)
+summary(bt1dt)
+summary(bt2dt)
 #look at how well the trial was randomized xd
 #harder since 44 -> 25 data points omegalul
 
