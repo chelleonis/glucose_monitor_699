@@ -37,11 +37,6 @@ merge_attempt_2 <- inner_join(c_glu_separate, c_dem2, by = "ID") %>% rename(tg =
   mutate(drug_type = case_when( (tg == 'Group A' & period == 1) | (tg == 'Group B' & period == 2) ~ 'x',
          (tg == 'Group B' & period == 1) | (tg == 'Group A' & period == 2) ~ 'y')) 
 
-# stuff unequal amount of subjects on drug
-
-tester <- merge_attempt_2 %>% filter(drug_type != 'y')
-length(unique(tester$ID))
-
 #Group A: received drug x then drug y
 #Group B: received drug y then drug x
 
@@ -56,11 +51,28 @@ at_2 = 250 #above target
 bt_1 = 70
 bt_2 = 54 #below target
 
+#need to account for long breaks when calculating delta
+#split into breaks in groups?
+#biggest break > 2 hours
+
 merge_attempt_3 <- merge_attempt_2 %>% group_by(ID,period) %>%
   mutate(dt_group = delta_time_group-lag(delta_time_group)) %>%
   rename(dt_init = delta_time_group) %>%
   mutate(gluc_avg = (glucose+lag(glucose))/2) %>%
-  dplyr::select(ID,glucose,period,tg,drug_type,dt_init,dt_group, gluc_avg)
+  mutate(missings = cut(dt_group, breaks= c(-Inf,2,Inf), labels = c(0,1)))
+
+
+merge_attempt_3[is.na(merge_attempt_3)] <- 0
+
+missing_refactor <- merge_attempt_3 %>% group_by(ID,period) %>%
+  mutate(dt_group_fix = dt_init - lag(dt_init))  %>%
+  dplyr::select(ID,glucose,period,tg,drug_type,dt_init,dt_group, gluc_avg) 
+
+missing_refactor[is.na(missing_refactor)] <- 0
+  
+
+
+  
 
 merge_attempt_3[is.na(merge_attempt_3)] <- 0
 
@@ -70,9 +82,6 @@ merge_attempt_4 <- merge_attempt_3 %>%
   mutate(d_bt_1 = glucose-bt_1) %>%
   mutate(d_bt_2 = glucose-bt_2)
   
-#need to account for long breaks when calculating delta
-#split into breaks in groups?
-#biggest break > 2 hours
 
 
 #normalize AUC to total time
