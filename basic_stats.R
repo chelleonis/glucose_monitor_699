@@ -35,16 +35,29 @@ at1dt <- aov(time_bt_1 ~ drug_type ,data = merge_attempt_5)
 #other things
 #response: either time_bt_1, or mean_gl, or n_auc_bt_1
 library(lme4)
-
+library(lmerTest)
 #variable recoding here
 #drug y = 0, x = 1
 #sex 0 = male, 1 = female
 #race 0 = other, 1 = white
 #ethnicity 0 non-latino, 1= latino/hispanic
-
+for_mixed_model <- merge_attempt_6 %>% 
+  mutate(Sex = as.factor(Sex) ) %>%
+  mutate(Ethnicity = as.factor(Ethnicity) ) %>%
+  mutate(drug_type = as.factor(drug_type) )
 #intercept only for now
 test_model <- lmer(formula = var_gl ~ 1 + mean_gl + n_auc_bt_1 + Sex + Age + Ethnicity + drug_type +
-                   (1|ID) , data = merge_attempt_6) 
+                   (1|ID) , data = for_mixed_model) 
+summary(test_model)
+
+test_model_2 <- lmer(formula = var_gl ~ 1 + n_auc_bt_1 + Sex + Age + Ethnicity + drug_type +
+                     (1|ID) , data = for_mixed_model) 
+summary(test_model_2)
+
+test_model_3 <- lmer(formula = mean_gl ~ 1 + n_auc_bt_1 + Sex + Age + Ethnicity + drug_type +
+                       (1|ID) , data = for_mixed_model) 
+summary(test_model_3)
+
 #diagnostics
 plot(fitted(model5), resid(model5, type = "pearson"))# this will create the plot
 abline(0,0, col="red")
