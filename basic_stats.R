@@ -64,10 +64,17 @@ qqline(ranef(model5)$class[,1], col = "red")
 #percent time (0-1)
 library(betareg)
 #analagous to GLM
-beta_model <- betareg(formula = time_bt_1 ~ Sex + Age + Ethnicity + drug_type, 
-                      data = merge_attempt_6) 
 
-#logit link cuz this is so fucking dumb
+#transform, since our data contains a lot of 0s zzzzzzzzzzzzZZZZ
+n = as.integer(length(merge_attempt_6$time_bt_1))
+
+for_beta_model <- merge_attempt_6 %>% 
+  mutate(time_bt_1_tr = (time_bt_1 *(n-1) + 0.5)/ n)
+
+beta_model <- betareg(formula = time_bt_1_tr ~ Sex + Age + Ethnicity + drug_type, 
+                      data = for_beta_model) 
+summary(beta_model)
+
 
 logit_link <- glm(time_bt_1 ~ Sex + Age + Ethnicity + drug_type, 
                   family = binomial,
