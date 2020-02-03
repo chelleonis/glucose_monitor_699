@@ -73,20 +73,40 @@ merge_attempt_4 <- merge_attempt_3 %>%
 #normalize AUC to total time
 
 short_summary <- merge_attempt_4 %>% group_by(ID,drug_type) %>%
-  summarize(time_at_1 = sum(dt_group[d_at_1 > 0]), 
-            time_at_2 = sum(dt_group[d_at_2 > 0]),
-            time_bt_1 = sum(dt_group[d_bt_1 < 0]),
-            time_bt_2 = sum(dt_group[d_bt_2 < 0]),
+  summarize(time_at_1 = sum(dt_group[d_at_1 > 0]/max(dt_init)), 
+            time_at_2 = sum(dt_group[d_at_2 > 0]/max(dt_init)),
+            time_bt_1 = sum(dt_group[d_bt_1 < 0]/max(dt_init)),
+            time_bt_2 = sum(dt_group[d_bt_2 < 0]/max(dt_init)),
             n_auc_at_1 = sum((dt_group[d_at_1 > 0]*gluc_avg[d_at_1>0])/max(dt_init)),
             n_auc_at_2 = sum((dt_group[d_at_2 > 0]*gluc_avg[d_at_2>0])/max(dt_init)),
             n_auc_bt_1 = sum((dt_group[d_bt_1 < 0]*gluc_avg[d_bt_1<0])/max(dt_init)),
             n_auc_bt_2 = sum((dt_group[d_bt_2 < 0]*gluc_avg[d_bt_2<0])/max(dt_init)),
-            mean_gl = mean(glucose)) 
+            mean_gl = mean(glucose),
+            var_gl = var(glucose)) 
 
 #AUC normalized by total time
 
 c_dem <- read.csv("C:/Users/typer321/Documents/cgm_demographics_biost699.csv", header = TRUE, 
                   sep = ",",fileEncoding="UTF-8-BOM") %>% rename(ID = id)
+glimpse(c_dem)
+#variable recoding here
+#drug y = 0, x = 1
+#sex 0 = male, 1 = female
+#race 0 = other, 1 = white
+#ethnicity 0 non-latino, 1= latino/hispanic
+
+c_dem2 <- c_dem %>% 
+  mutate(Sex = ifelse(grepl(1,as.character(c_dem$Sex)),1,0)) %>%
+  mutate(Race = ifelse(grepl(4,as.character(c_dem$Race)),1,0)) %>%
+  mutate(Ethnicity = ifelse(grepl(0,as.character(c_dem$Ethnicity)),1,0))
+  
 
 merge_attempt_5 <- inner_join(short_summary, c_dem, by = "ID")
+
+#with appropriated coded variables:
+
+merge_attempt_6 <- inner_join(short_summary, c_dem2, by = "ID") %>%
+  mutate(drug_type = ifelse(grepl('x',drug_type),1,0))
+
+
 
