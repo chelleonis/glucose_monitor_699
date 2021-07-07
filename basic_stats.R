@@ -95,7 +95,7 @@ logit_link <- glm(time_bt_1 ~ Sex + Age + Ethnicity + drug_type,
 summary(logit_link)
 
 
-#ridge regression if you have time lol
+
 
 
 
